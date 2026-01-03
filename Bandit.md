@@ -297,3 +297,23 @@ shows us the permissions for each file.    we only want the owner to have permis
 now we can sign in to `bandit14` using the private key.
 
 >`ssh -i sshkey.private -p 2220 bandit14@bandit.labs.overthewire.org`
+
+The last step is to actually get this level's password, though that isn't necessary since we can just connect to this user using the ssh private key, we will need it for the next level.   we know it is stored in `/etc/bandit_pass/bandit14` from the website so a simple `cat` command should do it.
+
+>`cat /etc/bandit_pass/bandit14`
+
+## level 14
+
+Now we need to send the password for this level to the localhost's port 30000. we can do this using the `nc` command which requires just the hostname and the port we wanna connect to.   We can send the password to that port using pipelining.
+
+> `cat /etc/bandit_pass/bandit14 | nc localhost 30000`
+
+
+## level 15
+
+This level is the same idea as the last level but this time we need to use SSL/TLS encryption and send the password to port 30001.      To encrypt our message we need to use `ncat` instead of the `nc` command and we need the `--ssl` argument.
+
+The following command should get us the password. 
+
+>`cat /etc/bandit_pass/bandit15 | ncat --ssl localhost 30001`
+
