@@ -613,3 +613,182 @@ After a few minutes we can get the results using the following command.
 > `sort results | uniq -u`
 
 
+## level 25
+
+
+The password for this level is given to us in a form of the private key for `bandit26` in the homedirectory for `bandit25`. We can get that using our knowledge from level 13.
+
+The real challenge is that the shell for `bandit26` is not `bin/bash`. We need to find what it is and fix it.
+
+To find out what it is, 
+
+> `cat /etc/passwd | grep bandit26`
+
+The `passwd` file contains some basic information about the users, each user's info is in one line and we need the line mentioning `bandit26`.
+
+The shell for `bandit26` is `/bin/showtext/` so we need to change it to `/bin/bash` so we can do what we need to do for next level.
+
+Since we can't change the permissions or the starting shell for users, we need to get creative. First let's check what `/bin/showtext/` do.
+
+> `cat /bin/showtext`
+
+We see that it uses the `more` command to show us a text file named `text.txt`. Let's use the sshkey we're given to try and get in `bandit26` since if the text is too long, we can use `more`'s interactive nature to get out of it before the `exit 0` command kicks us.
+
+Transfer the sshkey and use it to connect to `bandit26`. I am going to skip over how to since we have already done it twice. 
+
+We see that the text is fairly short so the `more` command doesn't go into the interactive mode. Let's shrink the terminal to only a few lines and try again.
+
+If you see `--More--(XX%)`, you did it right, press `v` to go into vim and then resize the terminal to the size you like. Beside being a text editor, Vim lets us run commands. Pressing `:` gets us in that mode. The following commands include the initial `:` but you don't need to type it twice.
+
+> `:set shell=/bin/bash`
+> `:shell`
+
+Now we have a bash shell open that we can use. If you type `exit` by accident, you can just retype `:shell` to get back. If you want to leave the shell, type `exit` to go back to Vim, then type `:q!`. You might have to press `enter` once or twice to get rid of the `more` command's interactive mode.
+
+While we're here let's get the password for this level
+
+> `cat /etc/bandit_pass/bandit26`
+
+We are going to have to do the next level in this shell.
+
+
+## level 26
+
+This is a pretty easy level. We have a file that let's us run commands as if it was `bandit27` so the first thing we might wanna do is get the password like we have before.
+
+> `exec ./bandit27-do cat /etc/bandit_pass/bandit27`
+
+As you can see, before we get the password, we get kicked out of that shell back to the vim. We can go around that by running this job in the background using `&` at the end
+
+> `exec ./bandit27-do cat /etc/bandit_pass/bandit27 &`
+
+
+## level 27
+
+
+This level is an introduction to git. We need to clone the repository at the given address to our machine and then get the password from it. 
+
+Make sure you're not logged into `bandit27` and run the following
+
+> `git clone ssh://bandit27-git@bandit.labs.overthewire.org:2220/home/bandit27-git/repo`
+
+Password is the same as `bandit27`. There should be a new file called repo in the directory you are in.
+
+> `cat ./repo/README`
+
+
+
+## level 28
+
+This level starts the same as the last, clone a repo and read the file inside. But this time the password has been redacted so we need to see if it was redacted to begin with or was there an initial commit that had the password.
+
+> `git clone ssh://bandit28-git@bandit.labs.overthewire.org:2220/home/bandit28-git/repo ./repo2`
+
+The `./repo2` is so there isn't a conflict with the `repo` file from last level. Use `cd to go in the new directory and let's check the commits.
+
+> `cd ./repo2`
+
+> `git log`
+
+We see that there are 3 different commits to this repository. We can swap between them using `git switch`. The password is in the second commit so let's go there.
+
+> `git switch origin`
+
+Press `tab` to see the commits and their uid. We want `HEAD^` or `8b7c651`
+
+> `git switch --detach 8b7c651`
+
+The `README.md` file contains the password.
+
+
+
+## level 29
+
+This level teaches us about switching to different branches.
+
+> `git clone ssh://bandit29-git@bandit.labs.overthewire.org:2220/home/bandit29-git/repo ./repo3`
+
+The `README.md` file doesn't have the password so let's go to another branch.
+
+> `git switch`
+
+Pressing tab shows us 3 branches. Let's go with `dev`
+
+> `git switch dev`
+
+Check the `README.md` file for passport.
+
+
+## level 30
+
+Same as the previous levels there is a git repo that we need to clone and get the password from. This time however we are dealing with `git tag`
+
+> `git clone ssh://bandit30-git@bandit.labs.overthewire.org:2220/home/bandit30-git/repo ./repo4`
+
+
+This is the initial commit and the `README.md` doesn't have the password.
+
+> `git tag`
+
+This shows us if there are any tags and well it turns out there is one. We can view it using `git show`
+
+> `git show secret`
+
+And that's our password.
+
+
+
+
+## level 31
+
+
+Another repo to clone.
+
+> `git clone ssh://bandit31-git@bandit.labs.overthewire.org:2220/home/bandit31-git/repo ./repo5`
+
+Reading the `README.md` we see that we need to push a text file. There is a `.gitignore` that excludes `.txt` files. So let's just delete it.
+
+> `rm './.gitignore'`
+
+Let's make our text file.
+
+> `echo 'May I come in?' > key.txt`
+
+And the next steps are to add the file to our local git repo, commit the changes and then push the file to the remote repo.
+
+> `git add key.txt`
+
+> `git commit -a`
+
+Now we are presented by a text editor called `nano`. Just describe what we added and press `ctrl + x`.
+
+> `git push`
+
+After you enter this level's password, you are given the password for next level and your push is automatically rejected.
+
+
+
+## level 32
+
+
+This level starts us in a different shell called the `uppershell`. It only lets us use commands that are in uppercase, which are not any we have used before. If we type `printenv` in a bash shell outside of this level, we see that there are multiple variables we might be able to use. We are going with the `$0` variable which let's us get a normal shell.
+
+> `$0`
+
+Using `ls -l` we can see that the `uppershell` file is owned by `bandit33` and is a `setuid` file. I didn't figure this out originally and ran 
+
+> `exec /bin/bash`
+
+After seeing `bandit33@bandit` I realized this is a `setuid` file.
+
+Anyways, now we have a shell we can run our lowercase commands in and we have `bandit33`'s permissions, we can just get the password using
+
+> `cat /etc/bandit_pass/bandit33`
+
+
+
+At this time this is the last level available. 
+
+Thanks for reading this document all the way and I hope it was helpful.
+
+
