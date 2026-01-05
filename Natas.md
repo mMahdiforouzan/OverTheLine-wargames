@@ -124,3 +124,47 @@ In your terminal run this command
 > `echo 3d3d516343746d4d6d6c315669563362 | xxd -p -r | tr -d '\n' | rev | base64 -d`
 
 You can enter the result in your browser for the password.
+
+
+## level 10
+
+
+This time we are dealing with a unsanitized input vulnerability. As we can see in the sourcecode provided via `View sourcecode`, The input is passed to the server using the `passthru()` function. There are two ways of using this for our benefit, the intended way and the "easy way". I will list both and recommend you try the intended way since we will have to be doing the "easy way" for next level anyways.
+
+
+### intended way
+
+We can use the fact that there is no sanitization of inputs to our advantage to end the `grep` command early using a `;` and then we can use the `cat` command to read the file containing the password for `natas10`
+
+> `curl -u natas9:password -X POST -d "needle=;cat /etc/natas_webpass/natas10;&submit=Search" http://natas9.natas.labs.overthewire.org`
+
+
+## "easy way"
+
+Another way to do this is using the fact that `grep` can process multiple files. This is also the "easy way" of doing it since it can be done through firefox without having to deal with special characters. The following input should get the password. It does however print the whole `dictionary.txt` which might take a second.
+
+> `. /etc/natas_webpass/natas10`
+
+## level 11
+
+This level is meant to be an evolution of the last question with the intended way. As I said before we are just going to use the fact that `grep` can deal with multiple files.
+
+> `. /etc/natas_webpass/natas10`
+
+As before, it will print out the whole of `dictionary.txt` so it will take a bit longer to load the page.
+
+
+## level 12
+
+This level was more of a cryptography level than anything. There is a python script named `natas11.py` in this repo that you can use to get the new cookie we need to send to the server to get our password. I am going to explain how to do everything and then explain why it works.
+
+> `curl -u natas11:UJdqkK1pTu6VLt9UHWAgRZz6sVUZ3lEk -c ./natas11 http://natas11.natas.labs.overthewire.org`
+
+This will connect us to the server and also put the cookies in a file named `natas11` in the same directory. Compare the value after `data` with the one in the python code for the `cookie` variable. If it's different just replace it. Be careful of the URL safe version of some symbols, especially if you see `%3D`, just replace it with an equal sign `=`. After running the python code, replace the `value` after `data=` in the bottom command with what you get from it.
+
+> `curl -u natas11:password -b "data=value" http://natas11.natas.labs.overthewire.org`
+
+
+### explanation
+
+We basically need to use the default values which are used to make the cookie for this level and do a XOR operation on each bit with the same index bit of the cookie we get from the server. This get's us the key used to encrypt the cookie. This is all due to the transitive property of the XOR operation. After getting the key, we need to figure out if the key was repeated or not, you can skip this since the key was repeated perfectly ten times and wasn't cut at the end, but for the sake of completeness I have done that in the python script. After finding the actual original key, we can use that to set the `showpassword` flag to `yes` by making a json array with the values we want and encrypting it using the same methods as the sourcecode. Sending this new cookie to the server we will get the password.
